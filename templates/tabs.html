@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<style>
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 5px;
+    text-align: left;
+}
+</style>
+
+    <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="http://getbootstrap.com/examples/jumbotron-narrow/jumbotron-narrow.css" rel="stylesheet">
+
+   
+  </head>
+
+  <body>
+
+    <div class="container">
+      <div class="header">
+        <nav>
+          <ul class="nav nav-pills pull-right">
+            <li role="presentation" ><a href="/">home</a></li>
+          </ul>
+        </nav>
+      </div>
+
+    <div class="container">
+         
+        <div class="jumbotron">
+            <h1>Please provide us some feedback</h1>
+            <p class="lead"></p>
+	    <p><a class="btn btn-lg btn-success" href="feedback" role="button">Feedback</a></p>
+            </p>
+        </div>
+
+<h1> Outcome of Our analysis </h1>
+
+
+
+
+<h2> Outcome of your prediction </h2>
+
+Overall Quality represents the overall reliability of the document.
+Accuracy quantifies the level of truthfulness of the document information.
+Precision quantifies whether the document information is precise.
+Completeness determines whether the document information is complete.
+Neutrality determines whether a particular stance (e.g., pro or con a given
+topic) is represented in the document.
+Readability quantifies whether the document reads well.
+Trustworthiness quantifies the perceived level of trustworthiness of the information
+in the document. 
+
+	{% block body %}
+	<p> Features rows.</p>
+	{{ dataframe|safe }}
+
+	<p> Prediction.</p>
+	{{ res|safe }}
+
+	<p> Controversial.</p>
+	{{ twit|safe }}
+
+	<p> Descriptive about Page.</p>
+	{{ des|safe }}
+
+	<p> Entities.</p>
+	{{ ent|safe }}
+	{% endblock %}
+
+
+
+

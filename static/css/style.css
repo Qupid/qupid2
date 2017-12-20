@@ -1,0 +1,22 @@
+*{
+    margin-left: 10px;
+}
+
+h2, h3, a{
+    color: slateblue;
+    text-decoration: underline;
+}
+
+#radio{
+    margin-bottom: 0;
+}
+
+textarea, input, label{
+    margin-bottom: 20px;
+    font-size: 14pt;
+}
+
+textarea{
+    height: 100px;
+    width: 300px;
+}

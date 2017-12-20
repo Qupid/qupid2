@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Feedback</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">Qupid</a>
+    </div>
+    <ul class="nav navbar-nav">
+      <li class="active"><a href="#">Home</a></li>
+      <li><a href="/">Home</a></li>
+      <li><a href="/pres">Documentation</a></li>
+      <li><a href="#">About</a></li>
+    </ul>
+  </div>
+</nav>
+  
+    <div class="container">
+        <h1>SURVEY</h1>
+        <form action='/create' method='post'>
+            {% with errors = get_flashed_messages(category_filter=["nameError"]) %}
+            {% if errors %}
+            <div class="error">
+                {%- for msg in errors %}
+                <p>{{ msg }}</p>
+                {% endfor -%}
+            </div>
+            {% endif %}
+            {% endwith %}
+            <label for='name'>Your Name:</label>
+            <input type='text' name='name'><br/>
+
+            <label for='trustworthiness'>trustworthiness:</label>
+            <select name='trustworthiness'>
+                {% for g in trustworthiness_list %}
+                <option name="{{ g }}">{{ g }}</option>
+                {% endfor %}
+            </select>
+			<br>
+            <label for='relevance'>relevance:</label>
+            <select name='relevance'>
+                {% for f in relevance_list %}
+                <option name="{{ f }}">{{ f }}</option>
+                {% endfor %}
+            </select> <br/>
+
+
+            <label for='readibility'>readibility:</label>
+            <select name='readibility'>
+                {% for e in readibility_list %}
+                <option name="{{ e }}">{{ e }}</option>
+                {% endfor %}
+            </select> <br/>
+
+
+            <label for='precision'>precision:</label>
+            <select name='precision'>
+                {% for d in precision_list %}
+                <option name="{{ d }}">{{ d }}</option>
+                {% endfor %}
+            </select> <br/>
+
+
+            <label for='neutrality'>neutrality :</label>
+            <select name='neutrality'>
+                {% for c in neutrality_list %}
+                <option name="{{ c }}">{{ c }}</option>
+                {% endfor %}
+            </select> <br/>
+
+
+            <label for='completeness'>completeness:</label>
+            <select name='completeness'>
+                {% for b in completeness_list %}
+                <option name="{{ b }}">{{ b }}</option>
+                {% endfor %}
+            </select> <br/>
+
+
+            <label for='accuracy'>accuracy:</label>
+            <select name='accuracy'>
+                {% for a in accuracy_list %}
+                <option name="{{ a }}">{{ a }}</option>
+                {% endfor %}
+            </select> <br/>
+         
+            <label for='OverallQuality'>OverallQuality </label>
+            <select name='OverallQuality'>
+                {% for k in OverallQuality_list %}
+                <option name="{{ k }}">{{ k }}</option>
+                {% endfor %}
+            </select> <br/>
+            {% with errors = get_flashed_messages(category_filter=["commentError"]) %}
+            {% if errors %}
+            <div class="error">
+                {%- for msg in errors %}
+                <p>{{ msg }}</p>
+                {% endfor -%}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <label for='comment'>Comment:</label>
+
+            <textarea rows="4" cols="50" name='comment'></textarea> <br/>
+            <input type='submit' value='Submit'>
+        </form>
+    </div>
+</body>
+</html>
