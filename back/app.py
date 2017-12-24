@@ -52,6 +52,16 @@ import time
 from flask import send_file
 import urllib
 from MagicGoogle import MagicGoogle
+from multiprocessing import Pool, cpu_count
+from queue import Queue
+from threading import Thread
+import time
+import pandas as pd
+from joblib import Parallel, delayed
+import multiprocessing
+from flask import Flask, send_from_directory
+from multiprocessing import Process
+import functools
 
 def conv(s):
     try:
@@ -72,64 +82,186 @@ def countLetters(word):
     return count
 
 
+def f1(q, url):
+    # try:
+    #print("Start: %s" % time.ctime())
+    # Instead of returning the result we put it in shared queue.
+    #     st = "/&callback=process&key=57bf606e01a24537ac906a86dc27891f94a0f587"
+    #     # zz = urlopen ( url )
+    #     quez = 'http://api.mywot.com/0.4/public_link_json2?hosts=' + url + st
+    #     stt = urllib.request.urlopen(quez).read()
+    #     stt = str(stt)
+    #     wot = re.findall('\d+', stt)
+    #     ##z=[[conv(s) for s in line.split()] for line in wot]
+    #     z = [conv(s) for s in wot]
+    #     high = (z[1])
+    #     low = (z[2])
+    #     # print ( high , low )
+        # WAYBACK
+        zz = "{0.scheme}://{0.netloc}/".format(urlsplit(url))
+        zurlz = "https://web.archive.org/web/0/" + str(zz)
+        r = requests.get(zurlz, allow_redirects=False)
+        data = r.content
+        years = re.findall('\d+', str(data))
+        years = [conv(s) for s in years]
+        years = (years[0])
+        years = int(str(years)[:4])
+        cols = {'yeararchive': [years],
+                # 'lowwot': [low],
+                # 'highwot': [high],
+                #'reponsetime': [vals],
+                'url': [str(url)]}
+        dfb = pd.DataFrame.from_dict(cols)
+        #print(dfb)
+        #print("Start: %s" % time.ctime())
+        q.put(dfb)
+    # except:
+    #     pass
+
+def f2(q, url):
+    try:
+    #print("Start: %s" % time.ctime())
+        vals = requests.get(url, timeout=4, allow_redirects=False).elapsed.total_seconds()
+        g = Goose()
+        article = g.extract(url=url)
+        text = article.cleaned_text
+        blob = TextBlob(text)
+        # taal = blob.detect_language()
+        # if taal == ('en'):
+        #     try:
+        s = Textatistic(text)
+        cols = {
+                        'wordcount': [s.word_count],
+                        'reponsetime': [vals],
+                        'subjectivity': [blob.sentiment.subjectivity],
+                        'polarity': [blob.sentiment.polarity],
+                        'fleschscore': [s.flesch_score],
+                        # 'kw': [ kw ] ,
+                        'url': [str(url)]}
+        dfa = pd.DataFrame.from_dict(cols)
+                #print(dfa)
+                #print("Start: %s" % time.ctime())
+        q.put(dfa)
+            # except:
+    except:
+        #s = Textatistic(text)
+        cols = {
+                        'wordcount': [str('err')],
+                        'reponsetime': [str('err')],
+                        'subjectivity': [str('err')],
+                        'polarity': [str('err')],
+                        'fleschscore': [str('err')],
+                        # 'kw': [ kw ] ,
+                        'url': [str(url)]}
+        dfa = pd.DataFrame.from_dict(cols)
+                #print(dfa)
+                #print("Start: %s" % time.ctime())
+        q.put(dfa)
+        #pass
+            #     pass
+    #pass
+
+
+def f3(q, url):
+    # try:
+    #print("Start: %s" % time.ctime())
+    # Instead of returning the result we put it in shared queue.
+        st = "/&callback=process&key=57bf606e01a24537ac906a86dc27891f94a0f587"
+        # zz = urlopen ( url )
+        quez = 'http://api.mywot.com/0.4/public_link_json2?hosts=' + url + st
+        stt = urllib.request.urlopen(quez).read()
+        stt = str(stt)
+        wot = re.findall('\d+', stt)
+        ##z=[[conv(s) for s in line.split()] for line in wot]
+        z = [conv(s) for s in wot]
+        high = (z[1])
+        low = (z[2])
+        # print ( high , low )
+        # WAYBACK
+        # zz = "{0.scheme}://{0.netloc}/".format(urlsplit(url))
+        # zurlz = "https://web.archive.org/web/0/" + str(zz)
+        # r = requests.get(zurlz, allow_redirects=False)
+        # data = r.content
+        # years = re.findall('\d+', str(data))
+        # years = [conv(s) for s in years]
+        # years = (years[0])
+        # years = int(str(years)[:4])
+        cols = {#'yeararchive': [years],
+                'lowwot': [low],
+                'highwot': [high],
+                #'reponsetime': [vals],
+                'url': [str(url)]}
+        dfb = pd.DataFrame.from_dict(cols)
+        #print(dfb)
+        #print("Start: %s" % time.ctime())
+        q.put(dfb)
+
 def tmpFunc(df):
-    # vals=requests.get ( df.url , timeout=4 , allow_redirects=False ).elapsed.total_seconds ( )
-    # vals=requests.get ( df.url , allow_redirects=False ).elapsed.total_seconds ( )
+    delayed_results = []
     for row in df.itertuples():
-        try:
-            g = Goose()
-            article = g.extract(url=row.url)
-            text = article.cleaned_text
-            blob = TextBlob(text)
-            taal = blob.detect_language()
-            if taal == ('en'):
+        #try:
+            url=row.url
+            result_queue = Queue()
+
+            # One Thread for response time
+            t1 = Thread(target=f1, args=(result_queue, url))
+            t2 = Thread(target=f2, args=(result_queue, url))
+            t3 = Thread(target=f3, args=(result_queue, url))
+
+            # Starting threads...
+            #print("Start: %s" % time.ctime())
+            t1.start()
+            t2.start()
+            t3.start()
+
+            # Waiting for threads to finish execution...
+            t1.join()
+            t2.join()
+            t3.join()
+    #t.join()
+            #print("End:   %s" % time.ctime())
+
+            # After threads are done, we can read results from the queue.
+            if not result_queue.empty():
                 try:
-                    s = Textatistic(text)
-                    vals = requests.get(row.url, timeout=4, allow_redirects=False).elapsed.total_seconds()
-                    st = "/&callback=process&key=57bf606e01a24537ac906a86dc27891f94a0f587"
-                    # zz = urlopen ( url )
-                    quez = 'http://api.mywot.com/0.4/public_link_json2?hosts=' + row.url + st
-                    stt = urllib.request.urlopen(quez).read()
-                    stt = str(stt)
-                    wot = re.findall('\d+', stt)
-                    ##z=[[conv(s) for s in line.split()] for line in wot]
-                    z = [conv(s) for s in wot]
-                    high = (z[1])
-                    low = (z[2])
-                    # print ( high , low )
-                    # WAYBACK
-                    zz = "{0.scheme}://{0.netloc}/".format(urlsplit(row.url))
-                    zurlz = "https://web.archive.org/web/0/" + str(zz)
-                    r = requests.get(zurlz, allow_redirects=False)
-                    data = r.content
-                    years = re.findall('\d+', str(data))
-                    years = [conv(s) for s in years]
-                    years = (years[0])
-                    years = int(str(years)[:4])
-                    cols = {'yeararchive': [years],
-                            'lowwot': [low],
-                            'highwot': [high],
-                            'reponsetime': [vals],
-                            'wordcount': [s.word_count],
-                            'subjectivity': [blob.sentiment.subjectivity],
-                            'polarity': [blob.sentiment.polarity],
-                            'fleschscore': [s.flesch_score],
-                            # 'kw': [ kw ] ,
-                            'url': [str(row.url)]}
-                    # vals=requests.get ( row.url , timeout=4 , allow_redirects=False ).elapsed.total_seconds ( )
-                    # cols = {'vals': [ vals ] , 'url': [ row.url ]}
-                    df = pd.DataFrame.from_dict(cols)
-                    return df
+                    r2 = result_queue.get(f2)
+                    r1 = result_queue.get(f1)
+                    r3 = result_queue.get(f3)
+                    #r4 = result_queue.get(f4)
+                    #print('slot 1')
+                        #print(r1)
+                        #print(r1)
+                    #print('Slot2')
+                        #print(r2)
+                    #mergen
+                    #try:
+                    #df=pd.merge(r1, r2, on='url')
+                    dfs = [r1, r2, r3]
+                    df = functools.reduce(lambda left, right: pd.merge(left, right, on='url'), dfs)
+                    #df = df[['mean', 4, 3, 2, 1]]
+                    #print('dss')
+                    #print(dss)
+                    #print('struct')
+
+                    df = df[['fleschscore', 'highwot', 'lowwot', 'polarity', 'reponsetime', 'subjectivity', 'url', 'wordcount', 'yeararchive']]
+                    #print (df)
+                #return df
                 except:
+
                     pass
-        except:
-            pass
+                #print('df')
+    return df
 
 
+
+# def applyParallel(dfGrouped, func):
+#     retLst = Parallel(n_jobs=multiprocessing.cpu_count())(delayed(func)(group) for name, group in dfGrouped)
+#     return pd.concat(retLst)
 def applyParallel(dfGrouped, func):
-    retLst = Parallel(n_jobs=multiprocessing.cpu_count())(delayed(func)(group) for name, group in dfGrouped)
+    with Pool(cpu_count()) as p:
+        #retLst = p.map(func, [group for name, group in dfGrouped])
+        retLst = p.map(func, [group for name, group in dfGrouped])
     return pd.concat(retLst)
-
 
 @app.route('/getterm', methods=['POST', 'GET'])
 def get_term():
@@ -147,6 +279,7 @@ def get_term():
         df = pd.DataFrame({'url': lijst})
         #print('parallel versionOzzy: ')
         dff = ((applyParallel(df.groupby(df.index), tmpFunc)))
+        dff = dff[dff.wordcount != 'err']
         #dfeat = dff
         # dfeat =del dff['url']
         newX = dff.values
