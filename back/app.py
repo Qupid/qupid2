@@ -121,7 +121,7 @@ def f1(q, url):
 def f2(q, url):
     try:
     #print("Start: %s" % time.ctime())
-        vals = requests.get(url, timeout=4, allow_redirects=False).elapsed.total_seconds()
+        #vals = requests.get(url, timeout=4, allow_redirects=False).elapsed.total_seconds()
         g = Goose()
         article = g.extract(url=url)
         text = article.cleaned_text
@@ -132,7 +132,7 @@ def f2(q, url):
         s = Textatistic(text)
         cols = {
                         'wordcount': [s.word_count],
-                        'reponsetime': [vals],
+                        #'reponsetime': [vals],
                         'subjectivity': [blob.sentiment.subjectivity],
                         'polarity': [blob.sentiment.polarity],
                         'fleschscore': [s.flesch_score],
@@ -147,7 +147,7 @@ def f2(q, url):
         #s = Textatistic(text)
         cols = {
                         'wordcount': [str('err')],
-                        'reponsetime': [str('err')],
+    #                    'reponsetime': [str('err')],
                         'subjectivity': [str('err')],
                         'polarity': [str('err')],
                         'fleschscore': [str('err')],
@@ -191,10 +191,26 @@ def f3(q, url):
                 'highwot': [high],
                 #'reponsetime': [vals],
                 'url': [str(url)]}
-        dfb = pd.DataFrame.from_dict(cols)
+        dfc = pd.DataFrame.from_dict(cols)
         #print(dfb)
         #print("Start: %s" % time.ctime())
-        q.put(dfb)
+        q.put(dfc)
+
+def f4(q, url):
+    vals = requests.get(url, timeout=4, allow_redirects=False).elapsed.total_seconds()
+    # try:
+    #print("Start: %s" % time.ctime())
+    # Instead of returning the result we put it in shared queue.
+    cols = {#'yeararchive': [years],
+                #'lowwot': [low],
+                #'highwot': [high],
+                'reponsetime': [vals],
+                'url': [str(url)]}
+    dfd = pd.DataFrame.from_dict(cols)
+        #print(dfb)
+        #print("Start: %s" % time.ctime())
+    q.put(dfd)
+
 
 def tmpFunc(df):
     delayed_results = []
@@ -207,17 +223,19 @@ def tmpFunc(df):
             t1 = Thread(target=f1, args=(result_queue, url))
             t2 = Thread(target=f2, args=(result_queue, url))
             t3 = Thread(target=f3, args=(result_queue, url))
-
+            t4 = Thread(target=f4, args=(result_queue, url))
             # Starting threads...
             #print("Start: %s" % time.ctime())
             t1.start()
             t2.start()
             t3.start()
+            t4.start()
 
             # Waiting for threads to finish execution...
             t1.join()
             t2.join()
             t3.join()
+            t4.join()
     #t.join()
             #print("End:   %s" % time.ctime())
 
@@ -227,6 +245,7 @@ def tmpFunc(df):
                     r2 = result_queue.get(f2)
                     r1 = result_queue.get(f1)
                     r3 = result_queue.get(f3)
+                    r4 = result_queue.get(f4)
                     #r4 = result_queue.get(f4)
                     #print('slot 1')
                         #print(r1)
@@ -236,7 +255,7 @@ def tmpFunc(df):
                     #mergen
                     #try:
                     #df=pd.merge(r1, r2, on='url')
-                    dfs = [r1, r2, r3]
+                    dfs = [r1, r2, r3, r4]
                     df = functools.reduce(lambda left, right: pd.merge(left, right, on='url'), dfs)
                     #df = df[['mean', 4, 3, 2, 1]]
                     #print('dss')
@@ -320,7 +339,7 @@ def get_score():
         vals = requests.get ( url , timeout=4 , allow_redirects=False ).elapsed.total_seconds ( )
         st = "/&callback=process&key=57bf606e01a24537ac906a86dc27891f94a0f587"
         # zz = urlopen ( url )
-        quez = 'http://api.mywot.com/0.4/public_link_json2?hosts=' + url + st
+        quez = 'http://api.mywot.com/0.4/xpublic_link_json2?hosts=' + url + st
         stt = urllib.request.urlopen ( quez ).read ( )
         stt = str ( stt )
         wot = re.findall ( '\d+' , stt )
