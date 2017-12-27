@@ -83,7 +83,7 @@ def countLetters(word):
 
 
 def f1(q, url):
-    # try:
+    try:
     #print("Start: %s" % time.ctime())
     # Instead of returning the result we put it in shared queue.
     #     st = "/&callback=process&key=57bf606e01a24537ac906a86dc27891f94a0f587"
@@ -115,7 +115,16 @@ def f1(q, url):
         #print(dfb)
         #print("Start: %s" % time.ctime())
         q.put(dfb)
-    # except:
+    except:
+        cols = {'yeararchive': [str('err')],
+                # 'lowwot': [low],
+                # 'highwot': [high],
+                # 'reponsetime': [vals],
+                'url': [str(url)]}
+        dfb = pd.DataFrame.from_dict(cols)
+        # print(dfb)
+        # print("Start: %s" % time.ctime())
+        q.put(dfb)
     #     pass
 
 def f2(q, url):
@@ -163,7 +172,7 @@ def f2(q, url):
 
 
 def f3(q, url):
-    # try:
+    try:
     #print("Start: %s" % time.ctime())
     # Instead of returning the result we put it in shared queue.
         st = "/&callback=process&key=57bf606e01a24537ac906a86dc27891f94a0f587"
@@ -195,21 +204,41 @@ def f3(q, url):
         #print(dfb)
         #print("Start: %s" % time.ctime())
         q.put(dfc)
+    except:
+        pass
+        cols = {  # 'yeararchive': [years],
+            'lowwot': [str('err')],
+            'highwot': [str('err')],
+            # 'reponsetime': [vals],
+            'url': [str(url)]}
+        dfc = pd.DataFrame.from_dict(cols)
+        # print(dfb)
+        # print("Start: %s" % time.ctime())
+        q.put(dfc)
 
 def f4(q, url):
-    vals = requests.get(url, timeout=4, allow_redirects=False).elapsed.total_seconds()
-    # try:
-    #print("Start: %s" % time.ctime())
-    # Instead of returning the result we put it in shared queue.
-    cols = {#'yeararchive': [years],
-                #'lowwot': [low],
-                #'highwot': [high],
-                'reponsetime': [vals],
-                'url': [str(url)]}
-    dfd = pd.DataFrame.from_dict(cols)
-        #print(dfb)
+    try:
+        vals = requests.get(url, timeout=4, allow_redirects=False).elapsed.total_seconds()
+        # try:
         #print("Start: %s" % time.ctime())
-    q.put(dfd)
+        # Instead of returning the result we put it in shared queue.
+        cols = {#'yeararchive': [years],
+                    #'lowwot': [low],
+                    #'highwot': [high],
+                    'reponsetime': [vals],
+                    'url': [str(url)]}
+        dfd = pd.DataFrame.from_dict(cols)
+            #print(dfb)
+            #print("Start: %s" % time.ctime())
+        q.put(dfd)
+    except:
+        cols = {  # 'yeararchive': [years],
+            # 'lowwot': [low],
+            # 'highwot': [high],
+            'reponsetime': [str('err')],
+            'url': [str(url)]}
+        dfd = pd.DataFrame.from_dict(cols)
+        pass
 
 
 def tmpFunc(df):
@@ -232,10 +261,10 @@ def tmpFunc(df):
             t4.start()
 
             # Waiting for threads to finish execution...
-            t1.join()
-            t2.join()
-            t3.join()
-            t4.join()
+            t1.join(4)
+            t2.join(4)
+            t3.join(4)
+            t4.join(4)
     #t.join()
             #print("End:   %s" % time.ctime())
 
@@ -273,14 +302,14 @@ def tmpFunc(df):
 
 
 
-# def applyParallel(dfGrouped, func):
-#     retLst = Parallel(n_jobs=multiprocessing.cpu_count())(delayed(func)(group) for name, group in dfGrouped)
-#     return pd.concat(retLst)
 def applyParallel(dfGrouped, func):
-    with Pool(cpu_count()) as p:
-        #retLst = p.map(func, [group for name, group in dfGrouped])
-        retLst = p.map(func, [group for name, group in dfGrouped])
+    retLst = Parallel(n_jobs=multiprocessing.cpu_count())(delayed(func)(group) for name, group in dfGrouped)
     return pd.concat(retLst)
+# def applyParallel(dfGrouped, func):
+#     with Pool(cpu_count()) as p:
+#         #retLst = p.map(func, [group for name, group in dfGrouped])
+#         retLst = p.map(func, [group for name, group in dfGrouped])
+#     return pd.concat(retLst)
 
 @app.route('/getterm', methods=['POST', 'GET'])
 def get_term():
@@ -298,7 +327,8 @@ def get_term():
         df = pd.DataFrame({'url': lijst})
         #print('parallel versionOzzy: ')
         dff = ((applyParallel(df.groupby(df.index), tmpFunc)))
-        dff = dff[dff.wordcount != 'err']
+        dff = dff.query('wordcount != "err" & reponsetime != "err" & highwot != "err" & yeararchive != "err"')
+        #dff = dff[dff.wordcount != 'err' ]
         #dfeat = dff
         # dfeat =del dff['url']
         newX = dff.values
