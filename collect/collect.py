@@ -7,7 +7,7 @@ import pandas as pd
 import requests
 from urllib.parse import urlsplit
 import time
-
+import os
 
 def conv(s):
     try:
@@ -58,21 +58,20 @@ for i in range(len(query)):
             #'kw': [ kw ] ,
             'url': [ query[i] ]}
         df = pd.DataFrame.from_dict ( cols )
-        #dft.to_csv ( 'ft.csv' , index=False , sep=',' , encoding='utf-8' )
-        df.to_csv ( 'ft.csv' , mode='a' , index=False , sep=',' , encoding='utf-8', header=False )
-        tcols = {'Text': [ article.cleaned_text ] ,
-            #'lowwot': [ low ] ,            #'kw': [ kw ] ,
-            'url': [ query[i] ]}
-        tdf = pd.DataFrame.from_dict ( tcols )
-        #dft.to_csv ( 'ft.csv' , index=False , sep=',' , encoding='utf-8' )
-        tdf.to_csv ( 'textft.csv' , mode='a' , index=False , sep=',' , encoding='utf-8', header=False )
+        df.to_csv('ozzy.csv', index=False)
+
+        if not os.path.isfile('ft.csv'):
+            df.to_csv('ft.csv', header='column_names')
+        else:  # else it exists so append without writing the header
+            df.to_csv('ft.csv', mode='a', header=False)
+
         time.sleep(2)
     except:
         pass
 
 #na bestanden
-#b = pd.read_csv("ft.csv")#labels
-#a = pd.read_csv("twit.csv")#features moet headers hebben
-#merged = a.merge(b, on='url', how='inner')
+b = pd.read_csv("ft.csv")#labels
+a = pd.read_csv("lab.csv")#features moet headers hebben
+merged = a.merge(b, on='url', how='inner')
 #del merged['urlz']
-#merged.to_csv("final_output.csv", index=False)
+merged.to_csv("mjoined.csv", index=False)
