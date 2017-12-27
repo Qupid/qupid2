@@ -58,12 +58,12 @@ for i in range(len(query)):
             #'kw': [ kw ] ,
             'url': [ query[i] ]}
         df = pd.DataFrame.from_dict ( cols )
-        df.to_csv('ozzy.csv', index=False)
+        #df.to_csv('ozzy.csv', index=False)
 
         if not os.path.isfile('ft.csv'):
-            df.to_csv('ft.csv', header='column_names')
+            df.to_csv('ft.csv', index=False)
         else:  # else it exists so append without writing the header
-            df.to_csv('ft.csv', mode='a', header=False)
+            df.to_csv('ft.csv', mode='a', header=False, index=False)
 
         time.sleep(2)
     except:
