@@ -82,6 +82,8 @@ def countLetters(word):
     return count
 
 
+
+
 def f1(q, url):
     try:
     #print("Start: %s" % time.ctime())
@@ -588,7 +590,63 @@ def create_user():
         fe.to_csv('feed.csv',mode = 'a',header=False, index=False)
     return redirect('/process')
 
+@app.route('/fig')
+def figure():
+    echo "ok"
 
+@app.route('/fig/<precision>/<accuracy>/<completeness>/<neutrality>/<relevance>/<readability>/<trustworthiness>/')
+def plotpie(precision, accuracy, completeness, neutrality, relevance, readability, trustworthiness):
+    group_names=['Precision','Accuracy','Completeness','Neutrality','Relevance','Readability','Trustworthiness']
+    group_size=[14.28,14.28,14.28,14.28,14.28,14.28,14.28]
+    
+    one=['1','1','1','1','1','1','1']
+    two=['2','2','2','2','2','2','2']
+    three=['3','3','3','3','3','3','3']
+    four=['4','4','4','4','4','4','4']
+    five=['5','5','5','5','5','5','5']
+    
+    subgroup_size=[4,4,4,4,4,4,4]
+    
+    a,b,c,d,e,f,g=[plt.cm.Greys, plt.cm.Purples, plt.cm.Blues, plt.cm.Greens, plt.cm.Oranges, plt.cm.Reds, plt.cm.PuBuGn]
+    
+    fig, ax=plt.subplots()
+    ax.axis('equal')
+    mypie, _ = ax.pie(group_size, radius=1.25, labels=group_names, colors=[a(0.6>=(precision>=5)),b(0.6*(accuracy>=5)),c(0.6*(completeness>=5)),d(0.6*(neutrality>=5)),e(0.6*(relevance>=5)),f(0.6*(readability>=5)),g(0.4*(trustworthiness>=5))])
+    plt.setp(mypie, width=0.3, edgecolor='black')
+    # plt.legend(mypie, group_names, loc="left")
+    
+    #second Ring inside
+    mypie2,_ = ax.pie(subgroup_size, radius=1.25-0.25, labels=four, labeldistance=0.9, colors=[a(0.6>=(precision>=4)),b(0.6*(accuracy>=4)),c(0.6*(completeness>=4)),d(0.6*(neutrality>=4)),e(0.6*(relevance>=4)),f(0.6*(readability>=4)),g(0.4*(trustworthiness>=4))])
+    plt.setp(mypie2, width=0.3, edgecolor='black')
+    plt.margins(0,0)
+    
+    #third Ring inside
+    mypie3,_ = ax.pie(subgroup_size, radius=1.25-0.5,labels=three,  labeldistance=0.9,colors=[a(0.6>=(precision>=3)),b(0.6*(accuracy>=3)),c(0.6*(completeness>=3)),d(0.6*(neutrality>=3)),e(0.6*(relevance>=3)),f(0.6*(readability>=3)),g(0.4*(trustworthiness>=3))])
+    plt.setp(mypie3, width=0.3, edgecolor='black')
+    plt.margins(0,0)
+    
+    # #fourth Ring inside
+    mypie4,_ = ax.pie(subgroup_size, radius=1.25-0.75, labels=two, labeldistance=0.8,colors=[a(0.6>=(precision>=2)),b(0.6*(accuracy>=2)),c(0.6*(completeness>=2)),d(0.6*(neutrality>=2)),e(0.6*(relevance>=2)),f(0.6*(readability>=2)),g(0.4*(trustworthiness>=2))])
+    plt.setp(mypie4, width=0.3, edgecolor='black')
+    plt.margins(1,1)
+    
+    # #fith Ring inside
+    mypie5,_ = ax.pie(subgroup_size, radius=1.25-1, labels=one, labeldistance=0.8,colors=[a(0.6),b(0.6),c(0.6),d(0.6),e(0.6),f(0.6),g(0.4*(trustworthiness>=1))])
+    plt.setp(mypie5, width=0.25, edgecolor='black')
+    plt.margins(0,0)
+                      
+                      #show it
+    plt.show()
+    img = BytesIO()
+    plt.savefig(img)
+    img.seek(0)
+    return send_file(img, mimetype='image/png')
+
+#@app.context_processor
+#def utility_processor():
+#    def plot_pie(precision, accuracy, completeness, neutrality, relevance, readability, trustworthiness):
+#        return plotpie(precision, accuracy, completeness, neutrality, relevance, readability, trustworthiness)
+#    return dict(format_price=format_price)
 
         
 
