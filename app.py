@@ -623,7 +623,6 @@ def plotpie(par_precision, par_accuracy, par_completeness, par_neutrality, par_r
     return send_file(img, mimetype='image/png')
 
         
-
 if __name__ == '__main__':
 #~ #    app.run(debug=True)
 #    app.run(threaded=True, host="0.0.0.0", port=80)
