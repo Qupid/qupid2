@@ -62,6 +62,8 @@ from joblib import Parallel, delayed
 import multiprocessing
 from flask import Flask, send_from_directory
 from multiprocessing import Process
+import matplotlib.pyplot as plt
+from matplotlib import colors as mcolors
 
 def conv(s):
     try:
@@ -100,14 +102,15 @@ def f1(q, url):
     #     low = (z[2])
     #     # print ( high , low )
         # WAYBACK
-        zz = "{0.scheme}://{0.netloc}/".format(urlsplit(url))
-        zurlz = "https://web.archive.org/web/0/" + str(zz)
-        r = requests.get(zurlz, allow_redirects=False)
-        data = r.content
-        years = re.findall('\d+', str(data))
-        years = [conv(s) for s in years]
-        years = (years[0])
-        years = int(str(years)[:4])
+        #zz = "{0.scheme}://{0.netloc}/".format(urlsplit(url))
+        #zurlz = "https://web.archive.org/web/0/" + str(zz)
+        #r = requests.get(zurlz, allow_redirects=True)
+        #data = r.content
+        #years = re.findall('\d+', str(data))
+        #years = [conv(s) for s in years]
+        #years = (years[0])
+        #years = int(str(years)[:4])
+        years = 1998
         cols = {'yeararchive': [years],
                 # 'lowwot': [low],
                 # 'highwot': [high],
@@ -218,9 +221,9 @@ def tmpFunc(df):
             result_queue = Queue()
 
             # One Thread for response time
-            t1 = Thread(target=f1, args=(result_queue, url))
-            t2 = Thread(target=f2, args=(result_queue, url))
-            t3 = Thread(target=f3, args=(result_queue, url))
+            t1 = Thread(target=f1, args=(result_queue, url)) # internet age
+            t2 = Thread(target=f2, args=(result_queue, url)) #textual stats
+            t3 = Thread(target=f3, args=(result_queue, url)) #mywot
 
             # Starting threads...
             #print("Start: %s" % time.ctime())
@@ -560,7 +563,64 @@ def create_user():
         fe.to_csv('feed.csv',mode = 'a',header=False, index=False)
     return redirect('/process')
 
+from io import StringIO, BytesIO
 
+@app.route('/fig/<par_precision>/<par_accuracy>/<par_completeness>/<par_neutrality>/<par_relevance>/<par_readability>/<par_trustworthiness>/')
+def plotpie(par_precision, par_accuracy, par_completeness, par_neutrality, par_relevance, par_readability, par_trustworthiness):
+    precision = float(par_precision)
+    accuracy = float(par_accuracy)
+    completeness = float(par_completeness)
+    neutrality = float(par_neutrality)
+    relevance = float(par_relevance)
+    readability = float(par_readability)
+    trustworthiness = float(par_trustworthiness)
+    group_names=['Precision','Accuracy','Completeness','Neutrality','Relevance','Readability','Trustworthiness']
+    group_size=[14.28,14.28,14.28,14.28,14.28,14.28,14.28]
+    
+    one=['1','1','1','1','1','1','1']
+    two=['2','2','2','2','2','2','2']
+    three=['3','3','3','3','3','3','3']
+    four=['4','4','4','4','4','4','4']
+    five=['5','5','5','5','5','5','5']
+    
+    subgroup_size=[4,4,4,4,4,4,4]
+    
+    a,b,c,d,e,f,g=[plt.cm.Greys, plt.cm.Purples, plt.cm.Blues, plt.cm.Greens, plt.cm.Oranges, plt.cm.Reds, plt.cm.PuBuGn]
+    
+    fig, ax=plt.subplots()
+    ax.axis('equal')
+    mypie, _ = ax.pie(group_size, radius=1.25, labels=group_names, colors=[a(0.6>=(precision>=5)),b(0.6*(accuracy>=5)),c(0.6*(completeness>=5)),d(0.6*(neutrality>=5)),e(0.6*(relevance>=5)),f(0.6*(readability>=5)),g(0.4*(trustworthiness>=5))])
+    plt.setp(mypie, width=0.3, edgecolor='black')
+    # plt.legend(mypie, group_names, loc="left")
+    
+    #second Ring inside
+    mypie2,_ = ax.pie(subgroup_size, radius=1.25-0.25, labels=four, labeldistance=0.9, colors=[a(0.6>=(precision>=4)),b(0.6*(accuracy>=4)),c(0.6*(completeness>=4)),d(0.6*(neutrality>=4)),e(0.6*(relevance>=4)),f(0.6*(readability>=4)),g(0.4*(trustworthiness>=4))])
+    plt.setp(mypie2, width=0.3, edgecolor='black')
+    plt.margins(0,0)
+    
+    #third Ring inside
+    mypie3,_ = ax.pie(subgroup_size, radius=1.25-0.5,labels=three,  labeldistance=0.9,colors=[a(0.6>=(precision>=3)),b(0.6*(accuracy>=3)),c(0.6*(completeness>=3)),d(0.6*(neutrality>=3)),e(0.6*(relevance>=3)),f(0.6*(readability>=3)),g(0.4*(trustworthiness>=3))])
+    plt.setp(mypie3, width=0.3, edgecolor='black')
+    plt.margins(0,0)
+    
+    # #fourth Ring inside
+    mypie4,_ = ax.pie(subgroup_size, radius=1.25-0.75, labels=two, labeldistance=0.8,colors=[a(0.6>=(precision>=2)),b(0.6*(accuracy>=2)),c(0.6*(completeness>=2)),d(0.6*(neutrality>=2)),e(0.6*(relevance>=2)),f(0.6*(readability>=2)),g(0.4*(trustworthiness>=2))])
+    plt.setp(mypie4, width=0.3, edgecolor='black')
+    plt.margins(1,1)
+    
+    # #fith Ring inside
+    mypie5,_ = ax.pie(subgroup_size, radius=1.25-1, labels=one, labeldistance=0.8,
+                      colors=[a(0.6),b(0.6),c(0.6),d(0.6),e(0.6),f(0.6),g(0.4*(trustworthiness>=1))])
+    plt.setp(mypie5, width=0.25, edgecolor='black')
+    plt.margins(0,0)
+        
+        #show it
+        #fig = plt.show()
+        #img = BytesIO()
+    img = BytesIO()
+    fig.savefig(img)
+    img.seek(0)
+    return send_file(img, mimetype='image/png')
 
         
 
