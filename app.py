@@ -5,6 +5,7 @@ https://github.com/mbr/flask-bootstrap.git
 form to Database
 Vanaf 70 naar multi
 """
+import re
 import pandas as pd
 import functools
 from joblib import Parallel, delayed
@@ -62,9 +63,12 @@ from joblib import Parallel, delayed
 import multiprocessing
 from flask import Flask, send_from_directory
 from multiprocessing import Process
-import matplotlib.pyplot as plt
-from matplotlib import colors as mcolors
+import matplotlib; matplotlib.use('Agg');
+import matplotlib.pyplot as plt,mpld3
+from flask import Markup
+from markupsafe import Markup
 
+from matplotlib import colors as mcolors
 def conv(s):
     try:
        return int(s)
@@ -286,6 +290,9 @@ def applyParallel(dfGrouped, func):
 #     retLst = Parallel(n_jobs=multiprocessing.cpu_count())(delayed(func)(group) for name, group in dfGrouped)
 #     return pd.concat(retLst)
 
+def create_img_url(par_precision, par_accuracy, par_completeness, par_neutrality, par_relevance, par_readability, par_trustworthiness):
+    return('<img src=\"../fig/'+str("{0:.0f}".format(par_precision))+'/'+str("{0:.0f}".format(par_accuracy))+'/'+str("{0:.0f}".format(par_completeness))+'/'+str("{0:.0f}".format(par_neutrality))+'/'+str("{0:.0f}".format(par_relevance))+'/'+str("{0:.0f}".format(par_readability))+'/'+str("{0:.0f}".format(par_trustworthiness))+'\"/>')
+
 
 @app.route('/getterm', methods=['POST', 'GET'])
 def get_term():
@@ -301,17 +308,10 @@ def get_term():
             lijst.append(url)
 
         df = pd.DataFrame({'url': lijst})
-        #print('parallel versionOzzy: ')
         dff = ((applyParallel(df.groupby(df.index), tmpFunc)))
-        dff = dff[dff.wordcount != 'err']
-        #dfeat = dff
-        # dfeat =del dff['url']
+        #dff = dff[dff.wordcount != 'err']
         newX = dff.values
-        # newX=np.delete(newX, [1, 3], axis=1)
         newX = np.delete(newX, [6], axis=1)
-        # print(newX)
-        #newX = newX[~np.isnan(newX).any(axis=1)]
-        #newX = newX.as_matrix().astype(np.float)
         pickle_fname = 'pickle.model'
         pickle_model = pickle.load(open(pickle_fname, 'rb'))
         result = pickle_model.predict(newX)  # print (result)
@@ -319,8 +319,15 @@ def get_term():
         dffres = pd.DataFrame(
             {'OverallQuality': px2[:, 0], 'accuracy': px2[:, 1], 'completeness': px2[:, 2], 'neutrality': px2[:, 3],
              'relevance': px2[:, 4], 'trustworthiness': px2[:, 5], 'readability': px2[:, 6], 'precision': px2[:, 7]})
-
-    return render_template('mp.html', dataframe=dff.to_html(index=False), res=dffres.to_html(index=False))
+             #print(dffres)
+             #dffres2 = dffres.apply(lambda row: plotpie(row[7],row[1],row[2],row[3],row[4],row[6],row[5])) #
+        dffres3 = pd.DataFrame.from_dict({'a':[plotpie(1,2,3,4,5,6,7)]},dtype='object')#.astype=(Markup)
+        dffres2 = plotpie(1,2,3,4,5,6,7)
+        pd.set_option('display.max_colwidth', -1)
+        print(dffres3)
+        print(type(dffres2))
+        print(dffres3.dtypes)
+        return render_template('mp.html', dataframe=dff.to_html(index=False), res=dffres2)
 
 
 @app.route('/')
@@ -613,14 +620,11 @@ def plotpie(par_precision, par_accuracy, par_completeness, par_neutrality, par_r
                       colors=[a(0.6),b(0.6),c(0.6),d(0.6),e(0.6),f(0.6),g(0.4*(trustworthiness>=1))])
     plt.setp(mypie5, width=0.25, edgecolor='black')
     plt.margins(0,0)
-        
-        #show it
-        #fig = plt.show()
-        #img = BytesIO()
-    img = BytesIO()
-    fig.savefig(img)
-    img.seek(0)
-    return send_file(img, mimetype='image/png')
+    return Markup(mpld3.fig_to_html(fig))
+    # img = BytesIO()
+    #fig.savefig(img)
+    #img.seek(0)
+#return send_file(img, mimetype='image/png')
 
 if __name__ == '__main__':
 #~ #    app.run(debug=True)
