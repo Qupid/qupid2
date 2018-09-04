@@ -239,7 +239,7 @@ def tmpFunc(df):
             t1.join()
             t2.join()
             t3.join()
-    #t.join()
+            #t.join()
             #print("End:   %s" % time.ctime())
 
             # After threads are done, we can read results from the queue.
@@ -314,19 +314,25 @@ def get_term():
         newX = np.delete(newX, [6], axis=1)
         pickle_fname = 'pickle.model'
         pickle_model = pickle.load(open(pickle_fname, 'rb'))
-        result = pickle_model.predict(newX)  # print (result)
+        try:
+            result = pickle_model.predict(newX)
+        except:
+            result = np.array([0,0,0,0,0,0,0,0])
+        print (result)
         px2 = result.reshape((-1, 8))
         dffres = pd.DataFrame(
             {'OverallQuality': px2[:, 0], 'accuracy': px2[:, 1], 'completeness': px2[:, 2], 'neutrality': px2[:, 3],
              'relevance': px2[:, 4], 'trustworthiness': px2[:, 5], 'readability': px2[:, 6], 'precision': px2[:, 7]})
              #print(dffres)
-             #dffres2 = dffres.apply(lambda row: plotpie(row[7],row[1],row[2],row[3],row[4],row[6],row[5])) #
-        dffres3 = pd.DataFrame.from_dict({'a':[plotpie(1,2,3,4,5,6,7)]},dtype='object')#.astype=(Markup)
-        dffres2 = plotpie(1,2,3,4,5,6,7)
+        print(dffres)
+        for row in dffres:
+            print(dffres[row])
+        dffres2 = {row:plotpie(dffres[row][7],dffres[row][1],dffres[row][2],dffres[row][3],dffres[row][4],dffres[row][6],dffres[row][5])  for row in dffres} #
+#dffres2 = {'a':plotpie(1,2,3,4,5,6,7)}
         pd.set_option('display.max_colwidth', -1)
-        print(dffres3)
-        print(type(dffres2))
-        print(dffres3.dtypes)
+        #print(dffres3)
+        #print(type(dffres2))
+        #print(dffres3.dtypes)
         return render_template('mp.html', dataframe=dff.to_html(index=False), res=dffres2)
 
 
@@ -641,6 +647,6 @@ if __name__ == '__main__':
 #    app.run(threaded=True)
     app.run(host='127.0.0.1')
     #app.run(host='0.0.0.0')
-
+#test
 
 
